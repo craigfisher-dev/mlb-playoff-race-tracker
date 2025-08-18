@@ -1,0 +1,4 @@
+supabase
+streamlit
+python-dotenv
+MLB-StatsAPI
