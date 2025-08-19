@@ -14,12 +14,12 @@ data = statsapi.get('teams', {'sportId': 1})
 mlb_teams = data['teams']
 
 
-
-for team in mlb_teams:  # Now iterate over the teams
+# Loops through all teams and stores team data in database table 
+for team in mlb_teams:
     team_data = {
         'team_id': team['id'],
         'team_name': team['name'],
-        'abbreviation': team['abbreviation']  # Also fix this - use 'abbreviation' not 'id'
+        'abbreviation': team['abbreviation'] 
     }
 
     try:
@@ -30,8 +30,7 @@ for team in mlb_teams:  # Now iterate over the teams
         print(f"Could not update {team['name']}")
     
 
-
-# Test with teams table (after you create it)
+# Testing if connect to database
 try:
     response = supabase.table('teams').select("*").execute()
     print("✅ Teams table connected!")
