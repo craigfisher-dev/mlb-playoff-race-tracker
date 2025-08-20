@@ -19,11 +19,20 @@ for team in mlb_teams:
     team_data = {
         'team_id': team['id'],
         'team_name': team['name'],
-        'abbreviation': team['abbreviation'] 
+        'abbreviation': team['abbreviation'],
+        'division': team['division']['name'],
+        'league': team['league']['name']
     }
 
     try:
         response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
+        
+        # Testing before putting to database table
+        # print(team['id'])
+        # print(team['name'])
+        # print(team['abbreviation'])
+        # print (team['division']['name'])
+        # print (team['league']['name'])
 
         print(f"Inserted/Updated: {team['name']}")
     except:
