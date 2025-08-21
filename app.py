@@ -11,7 +11,14 @@ supabase = create_client(url, key)
 
 
 data = statsapi.get('teams', {'sportId': 1})
+
+
 mlb_teams = data['teams']
+
+
+standings = statsapi.standings(season='2025')
+
+print(standings)
 
 
 # Loops through all teams and stores team data in database table 
