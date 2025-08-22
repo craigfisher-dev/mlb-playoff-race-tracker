@@ -12,13 +12,18 @@ supabase = create_client(url, key)
 
 data = statsapi.get('teams', {'sportId': 1})
 
+# print(data)
 
 mlb_teams = data['teams']
 
+# print(len(mlb_teams))
 
-standings = statsapi.standings(season='2025')
 
-print(standings)
+standings_data = statsapi.standings_data(season='2025')
+
+standings_data_divisions = list(standings_data.values())
+
+print(standings_data_divisions[0])
 
 
 # Loops through all teams and stores team data in database table 
@@ -32,7 +37,7 @@ for team in mlb_teams:
     }
 
     try:
-        response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
+        # response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
         
         # Testing before putting to database table
         # print(team['id'])
@@ -48,7 +53,7 @@ for team in mlb_teams:
 
 # Testing if connect to database
 try:
-    response = supabase.table('teams').select("*").execute()
+    # response = supabase.table('teams').select("*").execute()
     print("✅ Teams table connected!")
 except Exception as e:
     print("❌ Error:", e)
