@@ -18,12 +18,14 @@ mlb_teams = data['teams']
 
 # print(len(mlb_teams))
 
+# test_team_id = statsapi.team_leaders(teamId='112', leaderCategories='hits')
+# print(test_team_id)
 
 standings_data = statsapi.standings_data(season='2025')
 
 standings_data_divisions = list(standings_data.values())
 
-print(standings_data_divisions[0])
+# print(standings_data_divisions[0])
 
 
 # Loops through all teams and stores team data in database table 
@@ -37,7 +39,7 @@ for team in mlb_teams:
     }
 
     try:
-        # response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
+        response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
         
         # Testing before putting to database table
         # print(team['id'])
