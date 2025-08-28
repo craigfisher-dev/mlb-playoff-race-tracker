@@ -50,7 +50,6 @@ for division in standings_data_divisions:
 print(standings_lookup[108])
 
 
-
 # Loops through all teams and stores team data in database table 
 for team in mlb_teams:
     standings = standings_lookup.get(team['id'])
@@ -91,5 +90,46 @@ for team in mlb_teams:
         print(f"Could not update {team['name']}")
 
 
-# Division rank stats have the correct tiebreak 
-# logic use that for placement when making tables
+
+
+
+
+# Next steps to implement
+# 
+# MLB Playoff Race Tracker - Feature List
+
+# Distance Calculation (Priority 1)
+
+# Single "distance from playoffs" number for every team
+# Uses only your existing data (no magic/elimination number calculations needed)
+# Formula based on division_rank, wild_card_rank, games_back_in_wild_card
+
+
+# Racing Visualization (Priority 2)
+
+# Team "Cars" on Racing Tracks
+
+# Car position = distance from finish line
+# Different car colors for different statuses (division leader, wild card, bubble, eliminated)
+# "E" for eliminated teams instead of broken cars
+
+
+# Three View Toggle System (Priority 3)
+
+# Full League View: Two big AL/NL tracks with all 15 teams each
+# Division View: All 6 divisions shown separately
+# Playoff Bracket View: Tournament tree structure
+
+# Tournament Bracket Tree (Priority 4)
+
+# Proper tree structure showing actual matchups
+# Teams face each other and advance through rounds
+# Connection lines between rounds
+# Current playoff seeding (1-6 in each league)
+# "If season ended today" bracket
+
+# Data Integration (Priority 5)
+
+# Daily data refresh from MLB API
+# Updated distance calculations when data changes
+# Current playoff positioning (store in database)
