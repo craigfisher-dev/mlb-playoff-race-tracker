@@ -72,7 +72,8 @@ for team in mlb_teams:
         'division_rank': int(standings['div_rank']) if standings['div_rank'] != '-' else 1,
         'games_back_in_division': 0.0 if standings['gb'] == '-' else float(standings['gb']),
         'wild_card_rank': int(standings['wc_rank']) if standings['wc_rank'] != '-' else None,
-        'games_back_in_wild_card': 0.0 if standings['wc_gb'] == '-' else float(standings['wc_gb']) if standings['wc_gb'] else None
+        'games_back_in_wild_card': 0.0 if standings['wc_gb'] == '-' else float(standings['wc_gb']) if standings['wc_gb'] else None,
+        'league_rank': standings['league_rank']
     }
 
     try:
@@ -100,9 +101,54 @@ for team in mlb_teams:
 
 # Distance Calculation (Priority 1)
 
-# Single "distance from playoffs" number for every team
-# Uses only your existing data (no magic/elimination number calculations needed)
-# Formula based on division_rank, wild_card_rank, games_back_in_wild_card
+# STEP 1: Playoff Teams (Positions 1-6)
+# - Division winners: sort by league_rank → seeds 1, 2, 3
+# - Wild cards: use wild_card_rank → seeds 4, 5, 6
+
+# STEP 2: Non-Playoff Teams (Compressed positions 7+)
+# - Use games_back_in_wild_card but compress the scale
+# - Prevents massive position gaps that make racing visualization look bad
+
+# Compression Formula:
+# if division_rank == 1:
+#     position = seed based on league_rank among division winners (1-3)
+# elif wild_card_rank in [1,2,3]:
+#     position = 3 + wild_card_rank (4-6)
+# else:
+#     gb = games_back_in_wild_card
+#     if gb <= 5:
+#         position = 7 + (gb * 0.4)        # 7.0 to 9.0 (close chase)
+#     elif gb <= 12:
+#         position = 9 + ((gb - 5) * 0.6)  # 9.0 to 13.2 (medium distance)  
+#     else:
+#         position = 13.2 + ((gb - 12) * 0.3)  # 13.2+ (long shots)
+
+# Examples:
+# TOR (division winner, league_rank=1) → Position 1
+# HOU (division winner, league_rank=4) → Position 3
+# BOS (wild_card_rank=1) → Position 4
+# Team 3GB back → Position 8.2 (7 + 3*0.4)
+# Team 8GB back → Position 10.8 (9 + (8-5)*0.6)
+# Team 20GB back → Position 15.6 (13.2 + (20-12)*0.3)
+
+# Result: Smooth visual scaling from playoff contention to elimination
+# - Prevents clustered top 6 vs. massive gaps problem
+# - Future-proof: works regardless of games remaining
+# - Always creates good racing visualization spacing
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Racing Visualization (Priority 2)
