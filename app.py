@@ -144,6 +144,21 @@ for team in mlb_teams:
 
 
 
+# Rank all teams in playoff order and show top 6 are in playoffs others all close if they still have a chance to make it in
+
+# 15 teams per league
+
+# If team is elimated mark then as E
+
+
+
+
+
+
+# Strech goal be able to play though the whole season one week at
+# a time to see teams chances over time
+
+
 
 
 
