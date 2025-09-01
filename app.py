@@ -144,9 +144,11 @@ for team in mlb_teams:
 
 
 
-# Rank all teams in playoff order and show top 6 are in playoffs others all close if they still have a chance to make it in
+# Rank all teams in playoff order and show top 6
+# are in playoffs others all close if they still
+# have a chance to make it in
 
-# 15 teams per league
+# 15 teams per league - NL, AL
 
 # If team is elimated mark then as E
 
@@ -155,7 +157,7 @@ for team in mlb_teams:
 
 
 
-# Strech goal be able to play though the whole season one week at
+# Strech goal: be able to play though the whole season one week at
 # a time to see teams chances over time
 
 
