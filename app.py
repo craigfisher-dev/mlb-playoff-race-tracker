@@ -29,6 +29,13 @@ standings_data = statsapi.standings_data(season='2025')
 standings_data_divisions = list(standings_data.values())
 
 
+
+
+
+national_league_teams = []
+american_league_teams = []
+
+
 # Gets the division - standings_data_divisions[0]
 # Then gets all the teams in the division ['teams']
 # Then get the first team [0]
@@ -46,7 +53,7 @@ standings_lookup = {}
 for division in standings_data_divisions:
     for team in division['teams']:
         standings_lookup[team['team_id']] = team
-    
+
 print(standings_lookup[108])
 
 
@@ -56,6 +63,11 @@ for team in mlb_teams:
 
     games_played = standings['w'] + standings['l']
     win_percentage = round(float(standings['w']/games_played), 3)
+
+    if team['league']['name'] == "National League": 
+        national_league_teams.append(team['name'])
+    else:
+        american_league_teams.append(team['name'])
 
     team_data = {
         'team_id': team['id'],
@@ -91,8 +103,11 @@ for team in mlb_teams:
         print(f"Could not update {team['name']}")
 
 
+print(national_league_teams)
+print(len(national_league_teams))
 
-
+print(american_league_teams)
+print(len(american_league_teams))
 
 
 # Next steps to implement
