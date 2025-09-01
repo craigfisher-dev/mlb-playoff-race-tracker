@@ -2,3 +2,4 @@ supabase
 streamlit
 python-dotenv
 MLB-StatsAPI
+pytest
