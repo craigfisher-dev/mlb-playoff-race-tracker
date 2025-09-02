@@ -30,7 +30,7 @@ standings_data_divisions = list(standings_data.values())
 
 
 
-
+# 15 teams per league - NL, AL
 
 national_league_teams = []
 american_league_teams = []
@@ -112,114 +112,39 @@ print(american_league_teams)
 print(len(american_league_teams))
 
 
-# Next steps to implement
-# 
-# MLB Playoff Race Tracker - Feature List
 
-# Distance Calculation (Priority 1)
 
-# STEP 1: Playoff Teams (Positions 1-6)
-# - Division winners: sort by league_rank → seeds 1, 2, 3
-# - Wild cards: use wild_card_rank → seeds 4, 5, 6
+# Calculate and assign playoff_position values for current playoff seeding (Priority 0)
 
-# STEP 2: Non-Playoff Teams (Compressed positions 7+)
-# - Use games_back_in_wild_card but compress the scale
-# - Prevents massive position gaps that make racing visualization look bad
+# Playoff Position Logic:
+# Seeds 1-3: Division winners ranked by win percentage (highest = seed 1).
+#            If two or more division winners are tied in win percentage, 
+#            use league_rank as the tie-breaker. This tie-break rule only 
+#            applies to division winners.
+# Seeds 4-6: Wild card teams ranked by wild_card_rank (1st WC = seed 4, etc.)
+# Seeds 7-15: Non-playoff teams ranked by wild_card_rank (or 15 if null/eliminated)
 
-# Compression Formula:
-# if division_rank == 1:
-#     position = seed based on league_rank among division winners (1-3)
-# elif wild_card_rank in [1,2,3]:
-#     position = 3 + wild_card_rank (4-6)
-# else:
-#     gb = games_back_in_wild_card
-#     if gb <= 5:
-#         position = 7 + (gb * 0.4)        # 7.0 to 9.0 (close chase)
-#     elif gb <= 12:
-#         position = 9 + ((gb - 5) * 0.6)  # 9.0 to 13.2 (medium distance)  
-#     else:
-#         position = 13.2 + ((gb - 12) * 0.3)  # 13.2+ (long shots)
+# Steps:
+# 1. Separate teams by league (AL/NL)
+# 2. For each league:
+#    - Get division winners (division_rank == 1), sort by win percentage 
+#      (and league_rank if tied), assign playoff_position 1, 2, 3
+#    - Get wild card teams (wild_card_rank 1-3), assign playoff_position 4, 5, 6
+#    - Get remaining teams, sort by wild_card_rank, assign playoff_position 7-15
+# 3. Store playoff_position in database along with other team stats
 
-# Examples:
-# TOR (division winner, league_rank=1) → Position 1
-# HOU (division winner, league_rank=4) → Position 3
-# BOS (wild_card_rank=1) → Position 4
-# Team 3GB back → Position 8.2 (7 + 3*0.4)
-# Team 8GB back → Position 10.8 (9 + (8-5)*0.6)
-# Team 20GB back → Position 15.6 (13.2 + (20-12)*0.3)
-
-# Result: Smooth visual scaling from playoff contention to elimination
-# - Prevents clustered top 6 vs. massive gaps problem
-# - Future-proof: works regardless of games remaining
-# - Always creates good racing visualization spacing
+# Result: playoff_position column will show current playoff seeding (1-6 make playoffs)
 
 
 
 
 
+# Division (Magic Number) Distance to finish line calculations (Priority 1)
 
+# 162 (starting zone) Magic Number
+# 0 (finish line) Magic Number
 
-
-
-# Rank all teams in playoff order and show top 6
-# are in playoffs others all close if they still
-# have a chance to make it in
-
-# 15 teams per league - NL, AL
-
-# If team is elimated mark then as E
-
-
-
-
-
-
-# Strech goal: be able to play though the whole season one week at
-# a time to see teams chances over time
-
-
-
-
-
-
-
-
-
-# Racing Visualization (Priority 2)
-
-# Team "Cars" on Racing Tracks
-
-# Car position = distance from finish line
-# Different car colors for different statuses (division leader, wild card, bubble, eliminated)
-# "E" for eliminated teams instead of broken cars
-
-
-# Three View Toggle System (Priority 3)
-
-# Full League View: Two big AL/NL tracks with all 15 teams each
-# Division View: All 6 divisions shown separately
-# Playoff Bracket View: Tournament tree structure
-
-# Tournament Bracket Tree (Priority 4)
-
-# Proper tree structure showing actual matchups
-# Teams face each other and advance through rounds
-# Connection lines between rounds
-# Current playoff seeding (1-6 in each league)
-# "If season ended today" bracket
-
-# Data Integration (Priority 5)
-
-# Daily data refresh from MLB API
-# Updated distance calculations when data changes
-# Current playoff positioning (store in database)
-
-
-
-
-
-
-
+# Each teams has there own lane so they are not on top of each other
 
 # 1. Division Magic Number Formula:
 # RG + 1 - (Losses by second place team - losses by first place team)
@@ -253,3 +178,36 @@ print(len(american_league_teams))
 
 # Games back = How many games behind the last playoff spot
 # Games remaining = Games left in the season for that team
+
+
+
+
+
+# Racing Visualization (Priority 2)
+
+# Team "Cars" on Racing Tracks (Lanes)
+
+# Car position = distance from finish line (magic number either to win division or get into playoffs
+# see above for how calculate it)
+# Different car colors for different statuses (division leader, wild card, bubble, eliminated)
+# "E" for eliminated teams instead of broken cars
+
+
+
+
+# Three View Toggle System (Priority 3)
+
+# Full League View: Two big AL/NL tracks with all 15 teams each
+# Division View: All 6 divisions shown separately
+# Playoff Bracket View: Tournament tree structure
+
+
+
+
+# Tournament Bracket Tree (Priority 4)
+
+# Proper tree structure showing actual matchups
+# Teams face each other and advance through rounds
+# Connection lines between rounds
+# Current playoff seeding (1-6 in each league)
+# "If season ended today" bracket
