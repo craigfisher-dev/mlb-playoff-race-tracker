@@ -16,7 +16,7 @@ data = statsapi.get('teams', {'sportId': 1})
 
 mlb_teams = data['teams']
 
-# print(len(mlb_teams))
+# print((mlb_teams[1]))
 
 # test_team_id = statsapi.team_leaders(teamId='112', leaderCategories='hits')
 # print(test_team_id)
@@ -54,7 +54,9 @@ for division in standings_data_divisions:
     for team in division['teams']:
         standings_lookup[team['team_id']] = team
 
-print(standings_lookup[108])
+print(standings_lookup[115])
+
+print(standings_lookup[146])
 
 
 # Loops through all teams and stores team data in database table 
@@ -211,3 +213,43 @@ print(len(american_league_teams))
 # Daily data refresh from MLB API
 # Updated distance calculations when data changes
 # Current playoff positioning (store in database)
+
+
+
+
+
+
+
+
+# 1. Division Magic Number Formula:
+# RG + 1 - (Losses by second place team - losses by first place team)
+# Where:
+
+# RG = Remaining games for the first place team
+# Second/first place teams are within the same division
+
+
+# Division Magic Number Formula (Trailling teams 2-5):
+# RG + 1 - (Losses by first place team - losses by (current place team))
+# Where:
+
+# RG = Remaining games for the CURRENT PLACE team
+# Current/first place teams are within the same division
+
+
+
+# 2. Playoff Magic Number Formula:
+# TG - WT - Lo + 1
+# Where:
+
+# TG = Total games in season (162 for MLB)
+# WT = Wins by your team
+# Lo = Losses by closest opponent (team holding last playoff spot)
+
+
+# 3. Elimination Formula:
+# Team is eliminated when: Games back > Games remaining
+# Where:
+
+# Games back = How many games behind the last playoff spot
+# Games remaining = Games left in the season for that team
