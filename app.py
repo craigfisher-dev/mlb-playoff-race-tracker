@@ -67,9 +67,9 @@ for team in mlb_teams:
     win_percentage = round(float(standings['w']/games_played), 3)
 
     if team['league']['name'] == "National League": 
-        national_league_teams.append(team['name'])
+        national_league_teams.append(team)
     else:
-        american_league_teams.append(team['name'])
+        american_league_teams.append(team)
 
     team_data = {
         'team_id': team['id'],
@@ -105,11 +105,12 @@ for team in mlb_teams:
         print(f"Could not update {team['name']}")
 
 
-print(national_league_teams)
-print(len(national_league_teams))
+# print(national_league_teams)
+# print(len(national_league_teams))
 
-print(american_league_teams)
-print(len(american_league_teams))
+# print(american_league_teams)
+# print(len(american_league_teams))
+
 
 
 
@@ -122,7 +123,7 @@ print(len(american_league_teams))
 #            use league_rank as the tie-breaker. This tie-break rule only 
 #            applies to division winners.
 # Seeds 4-6: Wild card teams ranked by wild_card_rank (1st WC = seed 4, etc.)
-# Seeds 7-15: Non-playoff teams ranked by wild_card_rank (or 15 if null/eliminated)
+# Seeds 7-15: Non-playoff teams ranked by wild_card_rank
 
 # Steps:
 # 1. Separate teams by league (AL/NL)
@@ -133,7 +134,150 @@ print(len(american_league_teams))
 #    - Get remaining teams, sort by wild_card_rank, assign playoff_position 7-15
 # 3. Store playoff_position in database along with other team stats
 
-# Result: playoff_position column will show current playoff seeding (1-6 make playoffs)
+# Result: playoff_position column will show current playoff seeding
+
+
+
+playoff_rank_NL = {}
+division_winners_NL = []
+wildcard_teams_NL = []
+
+
+# Calculates and assigns playoff_position values for current playoff seeding (National League)
+for team in national_league_teams:
+    standings = standings_lookup.get(team['id'])
+    wc_rank = standings['wc_rank']
+    win_percentage = round(float(standings['w']/(standings['w'] + standings['l'])), 4)
+
+    # Divsion winner
+    if (wc_rank == '-'):
+        division_winner_data = {
+            'team_id' : team['id'], 
+            'name' : standings['name'],
+            'win_percentage' : win_percentage,
+            'league_rank': int(standings['league_rank'])
+        }
+        division_winners_NL.append(division_winner_data)
+    # All other teams
+    else:
+        wildcard_data = {
+            'team_id' : team['id'], 
+            'name' : standings['name'],
+            'wc_rank' : int(standings['wc_rank'])
+        }
+        wildcard_teams_NL.append(wildcard_data)
+
+def get_division_sort_key(standings):
+    return (-standings['win_percentage'], standings['league_rank'])
+    
+division_winners_NL.sort(key=get_division_sort_key)
+    
+def get_wildcard_sort_key(standings):
+    return (standings['wc_rank'])
+    
+wildcard_teams_NL.sort(key=get_wildcard_sort_key)
+
+print(division_winners_NL)
+
+print(wildcard_teams_NL)
+
+
+playoff_position = 1
+    
+# Seeds 1-3: Division winners (already sorted by win % and league_rank)
+for team in division_winners_NL:
+    playoff_rank_NL[team['team_id']] = playoff_position
+    playoff_position += 1
+
+# Seeds 4-15: Remaining teams
+for team in wildcard_teams_NL:
+    playoff_rank_NL[team['team_id']] = playoff_position
+    playoff_position += 1
+
+print("NL Playoff Rankings:")
+print(playoff_rank_NL)
+
+for team_id in playoff_rank_NL:
+    playoff_position_data = {
+        'team_id': team_id,                           # Use the key (team_id)
+        'playoff_position': playoff_rank_NL[team_id]  # Use the value (playoff_position)
+    }
+    # print(playoff_position_data)
+    
+    response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
+    print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
+
+
+
+playoff_rank_AL = {}
+division_winners_AL = []
+wildcard_teams_AL = []
+
+# Calculates and assigns playoff_position values for current playoff seeding (American League)
+for team in american_league_teams:
+    standings = standings_lookup.get(team['id'])
+    wc_rank = standings['wc_rank']
+    win_percentage = round(float(standings['w']/(standings['w'] + standings['l'])), 4)
+
+    # Divsion winner
+    if (wc_rank == '-'):
+        division_winner_data = {
+            'team_id' : team['id'], 
+            'name' : standings['name'],
+            'win_percentage' : win_percentage,
+            'league_rank': int(standings['league_rank'])
+        }
+        division_winners_AL.append(division_winner_data)
+    # All other teams
+    else:
+        wildcard_data = {
+            'team_id' : team['id'], 
+            'name' : standings['name'],
+            'wc_rank' : int(standings['wc_rank'])
+        }
+        wildcard_teams_AL.append(wildcard_data)
+
+def get_division_sort_key(standings):
+    return (-standings['win_percentage'], standings['league_rank'])
+    
+division_winners_AL.sort(key=get_division_sort_key)
+    
+def get_wildcard_sort_key(standings):
+    return (standings['wc_rank'])
+    
+wildcard_teams_AL.sort(key=get_wildcard_sort_key)
+
+print(division_winners_AL)
+
+print(wildcard_teams_AL)
+
+
+playoff_position = 1
+    
+# Seeds 1-3: Division winners (already sorted by win % and league_rank)
+for team in division_winners_AL:
+    playoff_rank_AL[team['team_id']] = playoff_position
+    playoff_position += 1
+
+# Seeds 4-15: Remaining teams
+for team in wildcard_teams_AL:
+    playoff_rank_AL[team['team_id']] = playoff_position
+    playoff_position += 1
+
+print("AL Playoff Rankings:")
+print(playoff_rank_AL)
+
+for team_id in playoff_rank_AL:
+    playoff_position_data = {
+        'team_id': team_id,                           # Use the key (team_id)
+        'playoff_position': playoff_rank_AL[team_id]  # Use the value (playoff_position)
+    }
+    # print(playoff_position_data)
+    
+    response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
+    print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
+
+
 
 
 
@@ -211,3 +355,7 @@ print(len(american_league_teams))
 # Connection lines between rounds
 # Current playoff seeding (1-6 in each league)
 # "If season ended today" bracket
+
+
+
+# Try all the api calls if those dont work then pull data from database (Priority 5)
