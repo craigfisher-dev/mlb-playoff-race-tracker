@@ -177,9 +177,9 @@ def get_wildcard_sort_key(standings):
     
 wildcard_teams_NL.sort(key=get_wildcard_sort_key)
 
-print(division_winners_NL)
+# print(division_winners_NL)
 
-print(wildcard_teams_NL)
+# print(wildcard_teams_NL)
 
 
 playoff_position = 1
@@ -194,8 +194,8 @@ for team in wildcard_teams_NL:
     playoff_rank_NL[team['team_id']] = playoff_position
     playoff_position += 1
 
-print("NL Playoff Rankings:")
-print(playoff_rank_NL)
+# print("NL Playoff Rankings:")
+# print(playoff_rank_NL)
 
 for team_id in playoff_rank_NL:
     playoff_position_data = {
@@ -205,7 +205,7 @@ for team_id in playoff_rank_NL:
     # print(playoff_position_data)
     
     response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
-    print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
+    # print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
 
 
 
@@ -247,9 +247,9 @@ def get_wildcard_sort_key(standings):
     
 wildcard_teams_AL.sort(key=get_wildcard_sort_key)
 
-print(division_winners_AL)
+# print(division_winners_AL)
 
-print(wildcard_teams_AL)
+# print(wildcard_teams_AL)
 
 
 playoff_position = 1
@@ -264,8 +264,8 @@ for team in wildcard_teams_AL:
     playoff_rank_AL[team['team_id']] = playoff_position
     playoff_position += 1
 
-print("AL Playoff Rankings:")
-print(playoff_rank_AL)
+# print("AL Playoff Rankings:")
+# print(playoff_rank_AL)
 
 for team_id in playoff_rank_AL:
     playoff_position_data = {
@@ -288,11 +288,47 @@ national_league_teams.sort(key=division_NL_sort_key)
 
 american_league_teams.sort(key=division_AL_sort_key)
 
-for team in national_league_teams:
-    print(team['name'])
+# print(national_league_teams[1])
 
-for team in american_league_teams:
-    print(team['name'])
+# for team in national_league_teams:
+#     print(team['name'])
+
+# for team in american_league_teams:
+#     print(team['name'])
+
+
+def create_divisions_dict(teams):
+    divisions = {}
+    for team in teams:
+        standings = standings_lookup.get(team['id'])
+        division = team['division']['name']
+        
+        if division not in divisions:
+            divisions[division] = {}
+        
+        # Convert div_rank to int for proper indexing
+        div_rank = int(standings['div_rank'])
+        
+        divisions[division][div_rank] = {
+            'team': team,
+            'standings': standings,
+            'losses': standings['l'],
+            'wins': standings['w'],
+            'team_name': team['name']
+        }
+    
+    # # Print divisions
+    # for division_name, teams_in_div in divisions.items():
+    #     # print(f"\n{division_name}:")
+    #     for rank in sorted(teams_in_div.keys()):
+    #         team_info = teams_in_div[rank]
+    #         # print(f"  {rank}. {team_info['team_name']} ({team_info['wins']}-{team_info['losses']})")
+    
+    return divisions
+
+divisions_NL = create_divisions_dict(national_league_teams)
+divisions_AL = create_divisions_dict(american_league_teams)
+
 
 
 # Division (Magic Number) Distance to finish line calculations (Priority 1)
@@ -318,25 +354,105 @@ for team in american_league_teams:
 # Current/first place teams are within the same division
 
 
+def calculate_division_magic_numbers(teams, divisions_dict):
+    for team in teams:
+        standings = standings_lookup.get(team['id'])
+        division = team['division']['name']
+        
+        if int(standings['div_rank']) == 1:
+            # Only calculate for first place teams
+            remaining_games = 162 - (standings['w'] + standings['l'])
+            second_place_losses = divisions_dict[division][2]['losses']
+            team['magic_number_win_division'] = remaining_games + 1 - (second_place_losses - standings['l'])
+            # print(f"{team['name']}: Division Magic Number = {team['magic_number_win_division']}")
+        else:
+            # Set to NULL for non-first place teams
+            team['magic_number_win_division'] = None
+            # print(f"{team['name']}: Not in first place - no division magic number")
+
+# Use it for both leagues
+calculate_division_magic_numbers(national_league_teams, divisions_NL)
+calculate_division_magic_numbers(american_league_teams, divisions_AL)
 
 
-# 2. Playoff Magic Number Formula:
-# TG - WT - Lo + 1
-# Where:
 
-# TG = Total games in season (162 for MLB)
-# WT = Wins by your team
-# Lo = Losses by closest opponent (team holding last playoff spot)
+# Distance calculation for race track visual
+def calculate_distance_from_clinch(teams, divisions_dict):
+    for team in teams:
+        standings = standings_lookup.get(team['id'])
+        division = team['division']['name']
+        
+        # Find the division leader's magic number
+        division_leader = divisions_dict[division][1]  # First place team
+        leader_magic_number = division_leader['team'].get('magic_number_win_division', 0)
+        
+        if int(standings['div_rank']) == 1:
+            # Division leader: distance = their magic number
+            team['distance_from_clinched_division'] = leader_magic_number
+        else:
+            # Other teams: leader's magic number + games back
+            games_back = float(standings['gb']) if standings['gb'] != '-' else 0.0
+            team['distance_from_clinched_division'] = leader_magic_number + games_back
+        
+        # print(f"{team['name']}: Distance from division clinch = {team['distance_from_clinched_division']}")
+
+calculate_distance_from_clinch(national_league_teams, divisions_NL)
+calculate_distance_from_clinch(american_league_teams, divisions_AL)
 
 
-# 3. Elimination Formula:
-# Team is eliminated when: Games back > Games remaining
-# Where:
-
-# Games back = How many games behind the last playoff spot
-# Games remaining = Games left in the season for that team
 
 
+# Team Elimination
+
+def add_elimination_status(teams):
+    for team in teams:
+        standings = standings_lookup.get(team['id'])
+        
+        # Check if eliminated (API returns 'E' for eliminated teams)
+        team['eliminated_from_division'] = standings['elim_num'] == 'E'
+        team['eliminated_from_playoffs'] = standings['wc_elim_num'] == 'E'
+        
+        # print(f"{team['name']}: Div Eliminated = {team['eliminated_from_division']}, Playoff Eliminated = {team['eliminated_from_playoffs']}")
+
+# Add this to your code
+add_elimination_status(national_league_teams)
+add_elimination_status(american_league_teams)
+
+
+
+def update_database_with_magic_numbers_and_elimination():
+    # Update all teams with magic numbers and elimination status
+    all_teams = national_league_teams + american_league_teams
+    
+    for team in all_teams:
+        standings = standings_lookup.get(team['id'])
+        
+        # Get elimination status from API (convert 'E' to 1, anything else to 0)
+        eliminated_from_division = 1 if standings['elim_num'] == 'E' else 0
+        eliminated_from_wildcard = 1 if standings['wc_elim_num'] == 'E' else 0
+        
+        # Get magic numbers (Already calculated before)
+        magic_number_division = team.get('magic_number_win_division', None)
+        distance_from_clinch = team.get('distance_from_clinched_division', None)
+        
+        # Data for database update
+        update_data = {
+            'team_id': team['id'],
+            'magic_number_division': magic_number_division,
+            'distance_from_clinched_division': distance_from_clinch,
+            'eliminated_from_division': eliminated_from_division,
+            'eliminated_from_wildcard': eliminated_from_wildcard
+        }
+        
+        try:
+            response = supabase.table('teams').upsert(update_data, on_conflict='team_id').execute()
+            print(f"Updated {team['name']}: Div MN={magic_number_division}, Div Elim={eliminated_from_division}, WC Elim={eliminated_from_wildcard}, Distance={distance_from_clinch}")
+        except Exception as e:
+            print(f"Error updating {team['name']}: {e}")
+
+
+# Updates magic_numbers_and_elimination in database
+update_database_with_magic_numbers_and_elimination()
 
 
 
