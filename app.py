@@ -278,14 +278,26 @@ for team_id in playoff_rank_AL:
     print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
 
 
+def division_NL_sort_key(national_league_teams):
+    return (national_league_teams['division']['name'])
 
+def division_AL_sort_key(american_league_teams):
+    return (american_league_teams['division']['name'])
 
+national_league_teams.sort(key=division_NL_sort_key)
 
+american_league_teams.sort(key=division_AL_sort_key)
+
+for team in national_league_teams:
+    print(team['name'])
+
+for team in american_league_teams:
+    print(team['name'])
 
 
 # Division (Magic Number) Distance to finish line calculations (Priority 1)
 
-# 162 (starting zone) Magic Number
+# 163 (starting zone) Magic Number
 # 0 (finish line) Magic Number
 
 # Each teams has there own lane so they are not on top of each other
@@ -304,6 +316,7 @@ for team_id in playoff_rank_AL:
 
 # RG = Remaining games for the CURRENT PLACE team
 # Current/first place teams are within the same division
+
 
 
 
@@ -335,6 +348,7 @@ for team_id in playoff_rank_AL:
 # see above for how calculate it)
 # Different car colors for different statuses (division leader, wild card, bubble, eliminated)
 # "E" for eliminated teams instead of broken cars
+
 
 
 
