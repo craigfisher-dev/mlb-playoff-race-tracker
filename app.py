@@ -2,12 +2,21 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client
 import statsapi
+import streamlit as st
 
 load_dotenv()  # This one line loads your .env file
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(url, key)
+
+
+st.set_page_config("MLB Playoff Race Tracker", layout='wide')
+
+
+st.title("MLB Playoff Race Tracker")
+
+
 
 
 data = statsapi.get('teams', {'sportId': 1})
@@ -100,7 +109,7 @@ for team in mlb_teams:
         # print (team['division']['name'])
         # print (team['league']['name'])
 
-        print(f"Inserted/Updated: {team['name']}")
+        # print(f"Inserted/Updated: {team['name']}")
     except:
         print(f"Could not update {team['name']}")
 
@@ -275,7 +284,7 @@ for team_id in playoff_rank_AL:
     # print(playoff_position_data)
     
     response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
-    print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
+    # print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
 
 
 def division_NL_sort_key(national_league_teams):
@@ -398,8 +407,6 @@ def calculate_distance_from_clinch(teams, divisions_dict):
 
 calculate_distance_from_clinch(national_league_teams, divisions_NL)
 calculate_distance_from_clinch(american_league_teams, divisions_AL)
-
-
 
 
 # Team Elimination
