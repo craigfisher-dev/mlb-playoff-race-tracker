@@ -467,8 +467,9 @@ update_database_with_magic_numbers_and_elimination()
 
 # Team "Cars" on Racing Tracks (Lanes)
 
-# Car position = distance from finish line (magic number either to win division or get into playoffs
-# see above for how calculate it)
+# Circles with team Abbreviation Example: SD
+# Division each have 5 lane race each with a finish line at the end 0 (clinch division)
+# Car position = Distance from division clinch (which is already calculated above and stored in database)
 # Different car colors for different statuses (division leader, wild card, bubble, eliminated)
 # "E" for eliminated teams instead of broken cars
 
@@ -476,23 +477,5 @@ update_database_with_magic_numbers_and_elimination()
 
 
 
-# Three View Toggle System (Priority 3)
 
-# Full League View: Two big AL/NL tracks with all 15 teams each
-# Division View: All 6 divisions shown separately
-# Playoff Bracket View: Tournament tree structure
-
-
-
-
-# Tournament Bracket Tree (Priority 4)
-
-# Proper tree structure showing actual matchups
-# Teams face each other and advance through rounds
-# Connection lines between rounds
-# Current playoff seeding (1-6 in each league)
-# "If season ended today" bracket
-
-
-
-# Try all the api calls if those dont work then pull data from database (Priority 5)
+# Try all the api calls if those dont work then pull data from database (Priority 3)
