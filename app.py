@@ -463,265 +463,279 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("<h2 style='text-align: center;'>American League</h2>", unsafe_allow_html=True)
     
-    for division_name, teams_in_div in divisions_AL.items():
-        # Build HTML for this division with separate lanes
-        division_html = f"""
-        <div style="margin-bottom: 30px;">
-            <h3 style="color: #ffd93d; text-align: center; margin-bottom: 20px; font-size: 1.3rem;">{division_name}</h3>
+    # Order divisions geographically: East, Central, West
+    division_order = ['American League East', 'American League Central', 'American League West']
+    for division_name in division_order:
+        if division_name in divisions_AL:
+            teams_in_div = divisions_AL[division_name]
+            st.markdown(f"<h3 style='color: #ffd93d; text-align: center; margin-bottom: 20px; font-size: 1.3rem;'>{division_name}</h3>", unsafe_allow_html=True)
             
-            <!-- 5 separate lanes, one per team -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-        """
-        
-        # Create a lane for each team
-        for rank in sorted(teams_in_div.keys()):
-            team_info = teams_in_div[rank]
-            team = team_info['team']
-            standings = team_info['standings']
+            # Create sub-columns within AL: lanes take 2/3, data takes 1/3
+            lane_col, data_col = st.columns([2, 1])
             
-            # Calculate position based on distance_from_clinched_division
-            distance = team.get('distance_from_clinched_division', 80)
-            max_distance = 163
-            position_percent = ((max_distance - distance) / max_distance) * 80  # Max 80% to leave room for finish zone
-            
-            # Determine team circle style based on status
-            if int(standings['div_rank']) == 1:
-                car_class = "car-leading"
-                bg_color = "linear-gradient(135deg, #ffd93d, #ffed4e)"
-                border_color = "#ffd93d"
-                text_color = "#333"
-            elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
-                car_class = "car-in-playoffs"
-                bg_color = "linear-gradient(135deg, #4d96ff, #67b5ff)"
-                border_color = "#4d96ff"
-                text_color = "white"
-            elif team_info['standings'].get('elim_num') == 'E':
-                car_class = "car-eliminated"
-                bg_color = "linear-gradient(135deg, #424242, #616161)"
-                border_color = "#666"
-                text_color = "#ccc"
-                team_display = "E"
-            else:
-                car_class = "car-longshot"
-                bg_color = "linear-gradient(135deg, #9e9e9e, #bdbdbd)"
-                border_color = "#9e9e9e"
-                text_color = "#333"
-            
-            # Use abbreviation unless eliminated
-            team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
-            
-            division_html += f"""
-                <!-- Lane for {team['abbreviation']} -->
-                <div style="position: relative; height: 50px; background: linear-gradient(90deg, rgba(255,107,107,0.2) 0%, rgba(255,193,7,0.2) 40%, rgba(76,175,80,0.3) 100%); border-radius: 25px; border: 2px solid rgba(255,255,255,0.2);">
+            with lane_col:
+                # Build HTML for racing lanes only
+                lanes_html = """
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                """
+                
+                # Create a lane for each team
+                for rank in sorted(teams_in_div.keys()):
+                    team_info = teams_in_div[rank]
+                    team = team_info['team']
+                    standings = team_info['standings']
                     
-                    <!-- Track markers -->
-                    <div style="position: absolute; top: 30%; bottom: 30%; left: 5%; right: 15%; border-top: 1px dashed rgba(255,255,255,0.3); border-bottom: 1px dashed rgba(255,255,255,0.3);"></div>
+                    # Calculate position based on distance_from_clinched_division
+                    distance = team.get('distance_from_clinched_division', 80)
+                    max_distance = 163
+                    position_percent = ((max_distance - distance) / max_distance) * 85  # Max 85% to leave room for finish zone
                     
-                    <!-- Finish zone -->
-                    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 50px; background: linear-gradient(90deg, transparent, rgba(76,175,80,0.4)); border-radius: 0 23px 23px 0;"></div>
+                    # Check if team has clinched division (magic number 0 or less)
+                    magic_number = team.get('magic_number_win_division', None)
+                    has_clinched = magic_number is not None and magic_number <= 0
                     
-                    <!-- Finish flag -->
-                    <div style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 1.5rem;">🏁</div>
+                    # If clinched, move them past the finish line
+                    if has_clinched:
+                        position_percent = 92  # Place them clearly past the finish line
                     
-                    <!-- Team car -->
-                    <div style="position: absolute; top: 50%; transform: translateY(-50%); left: {position_percent}%; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 9px; color: {text_color}; background: {bg_color}; border: 2px solid {border_color}; transition: all 0.3s ease;">
-                        {team_display}
-                    </div>
-                </div>
-            """
-        
-        division_html += "</div>"
-        
-        # Add team details below
-        division_html += '<div style="margin-top: 15px; display: grid; gap: 10px;">'
-        for rank in sorted(teams_in_div.keys()):
-            team_info = teams_in_div[rank]
-            team = team_info['team']
-            standings = team_info['standings']
+                    # Determine team circle style based on status - add transparency
+                    if has_clinched and int(standings['div_rank']) == 1:
+                        bg_color = "linear-gradient(135deg, rgba(76,175,80,0.9), rgba(102,187,106,0.9))"
+                        border_color = "#4caf50"
+                        text_color = "white"
+                    elif int(standings['div_rank']) == 1:
+                        bg_color = "linear-gradient(135deg, rgba(255,217,61,0.9), rgba(255,237,78,0.9))"
+                        border_color = "#ffd93d"
+                        text_color = "#333"
+                    elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
+                        bg_color = "linear-gradient(135deg, rgba(77,150,255,0.9), rgba(103,181,255,0.9))"
+                        border_color = "#4d96ff"
+                        text_color = "white"
+                    elif team_info['standings'].get('elim_num') == 'E':
+                        bg_color = "linear-gradient(135deg, rgba(66,66,66,0.8), rgba(97,97,97,0.8))"
+                        border_color = "#666"
+                        text_color = "#ccc"
+                    else:
+                        bg_color = "linear-gradient(135deg, rgba(158,158,158,0.8), rgba(189,189,189,0.8))"
+                        border_color = "#9e9e9e"
+                        text_color = "#333"
+                    
+                    # Use abbreviation unless eliminated
+                    team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
+                    
+                    lanes_html += f"""
+                        <!-- Lane for {team['abbreviation']} -->
+                        <div style="position: relative; height: 50px; background: linear-gradient(90deg, rgba(220,53,69,0.15) 0%, rgba(255,193,7,0.15) 35%, rgba(40,167,69,0.15) 85%, rgba(40,167,69,0.2) 100%); border-radius: 25px; border: 1px solid rgba(255,255,255,0.15); overflow: hidden;">
+                            
+                            <!-- Track markers -->
+                            <div style="position: absolute; top: 30%; bottom: 30%; left: 5%; right: 8%; border-top: 1px dashed rgba(255,255,255,0.3); border-bottom: 1px dashed rgba(255,255,255,0.3);"></div>
+                            
+                            <!-- Finish line -->
+                            <div style="position: absolute; right: 8%; top: 8%; bottom: 8%; width: 3px; background: linear-gradient(180deg, #28a745, #40e95e); border-radius: 1px; box-shadow: 0 0 4px rgba(40,167,69,0.4);"></div>
+                            
+                            <!-- Team car -->
+                            <div style="position: absolute; top: 50%; transform: translateY(-50%); left: {position_percent}%; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 8px; color: {text_color}; background: {bg_color}; border: 2px solid {border_color}; transition: all 0.3s ease; z-index: 10; {'box-shadow: 0 0 10px rgba(40,167,69,0.6);' if has_clinched else ''}">
+                                {team_display}
+                            </div>
+                        </div>
+                    """
+                
+                lanes_html += "</div>"
+                st.html(lanes_html)
             
-            record = f"{team_info['wins']}-{team_info['losses']}"
-            games_back = team_info['standings']['gb'] if team_info['standings']['gb'] != '-' else "LEAD"
-            win_pct = f"{team_info['wins']/(team_info['wins'] + team_info['losses']):.3f}"
-            
-            # Magic number if available
-            magic_number = team.get('magic_number_win_division', None)
-            magic_text = f" • Magic #: {magic_number}" if magic_number is not None and int(standings['div_rank']) == 1 else ""
-            
-            # Status text and color
-            if int(standings['div_rank']) == 1:
-                status = "LEADING DIVISION"
-                status_color = "#ffd93d"
-                card_class = "leading"
-                emoji = "🥇"
-            elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
-                status = f"IN PLAYOFFS • {games_back} GB"
-                status_color = "#4d96ff"
-                card_class = "in-playoffs"
-                emoji = "🎯"
-            elif team_info['standings'].get('elim_num') == 'E':
-                status = "ELIMINATED"
-                status_color = "#666"
-                card_class = "eliminated"
-                emoji = "❌"
-            else:
-                status = f"CHASING • {games_back} GB"
-                status_color = "#9e9e9e"
-                card_class = "longshot"
-                emoji = "⚔️"
-            
-            division_html += f"""
-                <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border-left: 3px solid {status_color};">
-                    <div style="font-weight: 600; margin-bottom: 3px; font-size: 1rem;">{emoji} {team['name']}</div>
-                    <div style="opacity: 0.9; margin-bottom: 5px; font-size: 0.9rem;">{record} ({win_pct}){magic_text}</div>
-                    <div style="background: rgba(77, 150, 255, 0.15); color: {status_color}; padding: 3px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem; font-weight: bold;">
-                        {status}
-                    </div>
-                </div>
-            """
-        
-        division_html += "</div></div>"
-        
-        # Render the HTML
-        st.html(division_html)
+            with data_col:
+                # Build HTML for team data only - single line format to match lane height exactly
+                data_html = '<div style="display: flex; flex-direction: column; gap: 8px;">'
+                
+                for rank in sorted(teams_in_div.keys()):
+                    team_info = teams_in_div[rank]
+                    team = team_info['team']
+                    standings = team_info['standings']
+                    
+                    record = f"{team_info['wins']}-{team_info['losses']}"
+                    games_back = team_info['standings']['gb'] if team_info['standings']['gb'] != '-' else "LEAD"
+                    win_pct = f"{team_info['wins']/(team_info['wins'] + team_info['losses']):.3f}"
+                    
+                    # Magic number logic - only show if not clinched and is division leader
+                    magic_number = team.get('magic_number_win_division', None)
+                    has_clinched = magic_number is not None and magic_number <= 0
+                    magic_text = ""
+                    if not has_clinched and magic_number is not None and int(standings['div_rank']) == 1:
+                        magic_text = f" • Magic #: {magic_number}"
+                    
+                    # Status text and color
+                    if has_clinched and int(standings['div_rank']) == 1:
+                        status = "CLINCHED DIVISION"
+                        status_color = "#4caf50"
+                        emoji = "🏆"
+                    elif int(standings['div_rank']) == 1:
+                        status = "LEADING"
+                        status_color = "#ffd93d"
+                        emoji = "🥇"
+                    elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
+                        status = f"PLAYOFFS • {games_back} GB"
+                        status_color = "#4d96ff"
+                        emoji = "🎯"
+                    elif team_info['standings'].get('elim_num') == 'E':
+                        status = "ELIMINATED"
+                        status_color = "#666"
+                        emoji = "❌"
+                    else:
+                        status = f"CHASING • {games_back} GB"
+                        status_color = "#9e9e9e"
+                        emoji = "⚔️"
+                    
+                    # Single line format matching lane height exactly (50px)
+                    data_html += f"""
+                        <div style="height: 50px; display: flex; align-items: center; text-align: left; padding: 0 12px; background: rgba(0,0,0,0.2); border-radius: 8px; border-left: 3px solid {status_color};">
+                            <div style="font-size: 0.85rem; line-height: 1.2;">
+                                <div style="font-weight: 600; color: white;">{emoji} {team['name']}</div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">{record} ({win_pct}){magic_text} • <span style="color: {status_color};">{status}</span></div>
+                            </div>
+                        </div>
+                    """
+                
+                data_html += "</div>"
+                st.html(data_html)
 
-# National League (Right Side)  
+# National League (Right Side)
 with col2:
     st.markdown("<h2 style='text-align: center;'>National League</h2>", unsafe_allow_html=True)
     
-    for division_name, teams_in_div in divisions_NL.items():
-        # Build HTML for this division with separate lanes
-        division_html = f"""
-        <div style="margin-bottom: 30px;">
-            <h3 style="color: #ffd93d; text-align: center; margin-bottom: 20px; font-size: 1.3rem;">{division_name}</h3>
+    # Order divisions geographically: East, Central, West
+    division_order = ['National League East', 'National League Central', 'National League West']
+    for division_name in division_order:
+        if division_name in divisions_NL:
+            teams_in_div = divisions_NL[division_name]
+            st.markdown(f"<h3 style='color: #ffd93d; text-align: center; margin-bottom: 20px; font-size: 1.3rem;'>{division_name}</h3>", unsafe_allow_html=True)
             
-            <!-- 5 separate lanes, one per team -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-        """
-        
-        # Create a lane for each team
-        for rank in sorted(teams_in_div.keys()):
-            team_info = teams_in_div[rank]
-            team = team_info['team']
-            standings = team_info['standings']
+            # Create sub-columns within NL: lanes take 2/3, data takes 1/3
+            lane_col, data_col = st.columns([2, 1])
             
-            # Calculate position based on distance_from_clinched_division
-            distance = team.get('distance_from_clinched_division', 80)
-            max_distance = 163
-            position_percent = ((max_distance - distance) / max_distance) * 80  # Max 80% to leave room for finish zone
-            
-            # Determine team circle style based on status
-            if int(standings['div_rank']) == 1:
-                car_class = "car-leading"
-                bg_color = "linear-gradient(135deg, #ffd93d, #ffed4e)"
-                border_color = "#ffd93d"
-                text_color = "#333"
-            elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
-                car_class = "car-in-playoffs"
-                bg_color = "linear-gradient(135deg, #4d96ff, #67b5ff)"
-                border_color = "#4d96ff"
-                text_color = "white"
-            elif team_info['standings'].get('elim_num') == 'E':
-                car_class = "car-eliminated"
-                bg_color = "linear-gradient(135deg, #424242, #616161)"
-                border_color = "#666"
-                text_color = "#ccc"
-                team_display = "E"
-            else:
-                car_class = "car-longshot"
-                bg_color = "linear-gradient(135deg, #9e9e9e, #bdbdbd)"
-                border_color = "#9e9e9e"
-                text_color = "#333"
-            
-            # Use abbreviation unless eliminated
-            team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
-            
-            division_html += f"""
-                <!-- Lane for {team['abbreviation']} -->
-                <div style="position: relative; height: 50px; background: linear-gradient(90deg, rgba(255,107,107,0.2) 0%, rgba(255,193,7,0.2) 40%, rgba(76,175,80,0.3) 100%); border-radius: 25px; border: 2px solid rgba(255,255,255,0.2);">
+            with lane_col:
+                # Build HTML for racing lanes only
+                lanes_html = """
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                """
+                
+                # Create a lane for each team
+                for rank in sorted(teams_in_div.keys()):
+                    team_info = teams_in_div[rank]
+                    team = team_info['team']
+                    standings = team_info['standings']
                     
-                    <!-- Track markers -->
-                    <div style="position: absolute; top: 30%; bottom: 30%; left: 5%; right: 15%; border-top: 1px dashed rgba(255,255,255,0.3); border-bottom: 1px dashed rgba(255,255,255,0.3);"></div>
+                    # Calculate position based on distance_from_clinched_division
+                    distance = team.get('distance_from_clinched_division', 80)
+                    max_distance = 163
+                    position_percent = ((max_distance - distance) / max_distance) * 85  # Max 85% to leave room for finish zone
                     
-                    <!-- Finish zone -->
-                    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 50px; background: linear-gradient(90deg, transparent, rgba(76,175,80,0.4)); border-radius: 0 23px 23px 0;"></div>
+                    # Check if team has clinched division (magic number 0 or less)
+                    magic_number = team.get('magic_number_win_division', None)
+                    has_clinched = magic_number is not None and magic_number <= 0
                     
-                    <!-- Finish flag -->
-                    <div style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 1.5rem;">🏁</div>
+                    # If clinched, move them past the finish line
+                    if has_clinched:
+                        position_percent = 92  # Place them clearly past the finish line
                     
-                    <!-- Team car -->
-                    <div style="position: absolute; top: 50%; transform: translateY(-50%); left: {position_percent}%; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 9px; color: {text_color}; background: {bg_color}; border: 2px solid {border_color}; transition: all 0.3s ease;">
-                        {team_display}
-                    </div>
-                </div>
-            """
-        
-        division_html += "</div>"
-        
-        # Add team details below
-        division_html += '<div style="margin-top: 15px; display: grid; gap: 10px;">'
-        for rank in sorted(teams_in_div.keys()):
-            team_info = teams_in_div[rank]
-            team = team_info['team']
-            standings = team_info['standings']
+                    # Determine team circle style based on status
+                    if has_clinched and int(standings['div_rank']) == 1:
+                        bg_color = "linear-gradient(135deg, rgba(76,175,80,0.9), rgba(102,187,106,0.9))"
+                        border_color = "#4caf50"
+                        text_color = "white"
+                    elif int(standings['div_rank']) == 1:
+                        bg_color = "linear-gradient(135deg, rgba(255,217,61,0.9), rgba(255,237,78,0.9))"
+                        border_color = "#ffd93d"
+                        text_color = "#333"
+                    elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
+                        bg_color = "linear-gradient(135deg, rgba(77,150,255,0.9), rgba(103,181,255,0.9))"
+                        border_color = "#4d96ff"
+                        text_color = "white"
+                    elif team_info['standings'].get('elim_num') == 'E':
+                        bg_color = "linear-gradient(135deg, rgba(66,66,66,0.8), rgba(97,97,97,0.8))"
+                        border_color = "#666"
+                        text_color = "#ccc"
+                    else:
+                        bg_color = "linear-gradient(135deg, rgba(158,158,158,0.8), rgba(189,189,189,0.8))"
+                        border_color = "#9e9e9e"
+                        text_color = "#333"
+                    
+                    # Use abbreviation unless eliminated
+                    team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
+                    
+                    lanes_html += f"""
+                        <!-- Lane for {team['abbreviation']} -->
+                        <div style="position: relative; height: 50px; background: linear-gradient(90deg, rgba(220,53,69,0.15) 0%, rgba(255,193,7,0.15) 35%, rgba(40,167,69,0.15) 85%, rgba(40,167,69,0.2) 100%); border-radius: 25px; border: 1px solid rgba(255,255,255,0.15); overflow: hidden;">
+                            
+                            <!-- Track markers -->
+                            <div style="position: absolute; top: 30%; bottom: 30%; left: 5%; right: 8%; border-top: 1px dashed rgba(255,255,255,0.3); border-bottom: 1px dashed rgba(255,255,255,0.3);"></div>
+                            
+                            <!-- Finish line -->
+                            <div style="position: absolute; right: 8%; top: 8%; bottom: 8%; width: 3px; background: linear-gradient(180deg, #28a745, #40e95e); border-radius: 1px; box-shadow: 0 0 4px rgba(40,167,69,0.4);"></div>
+                            
+                            <!-- Team car -->
+                            <div style="position: absolute; top: 50%; transform: translateY(-50%); left: {position_percent}%; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 8px; color: {text_color}; background: {bg_color}; border: 2px solid {border_color}; transition: all 0.3s ease; z-index: 10; {'box-shadow: 0 0 10px rgba(40,167,69,0.6);' if has_clinched else ''}">
+                                {team_display}
+                            </div>
+                        </div>
+                    """
+                
+                lanes_html += "</div>"
+                st.html(lanes_html)
             
-            record = f"{team_info['wins']}-{team_info['losses']}"
-            games_back = team_info['standings']['gb'] if team_info['standings']['gb'] != '-' else "LEAD"
-            win_pct = f"{team_info['wins']/(team_info['wins'] + team_info['losses']):.3f}"
-            
-            # Magic number if available
-            magic_number = team.get('magic_number_win_division', None)
-            magic_text = f" • Magic #: {magic_number}" if magic_number is not None and int(standings['div_rank']) == 1 else ""
-            
-            # Status text and color
-            if int(standings['div_rank']) == 1:
-                status = "LEADING DIVISION"
-                status_color = "#ffd93d"
-                card_class = "leading"
-                emoji = "🥇"
-            elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
-                status = f"IN PLAYOFFS • {games_back} GB"
-                status_color = "#4d96ff"
-                card_class = "in-playoffs"
-                emoji = "🎯"
-            elif team_info['standings'].get('elim_num') == 'E':
-                status = "ELIMINATED"
-                status_color = "#666"
-                card_class = "eliminated"
-                emoji = "❌"
-            else:
-                status = f"CHASING • {games_back} GB"
-                status_color = "#9e9e9e"
-                card_class = "longshot"
-                emoji = "⚔️"
-            
-            division_html += f"""
-                <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border-left: 3px solid {status_color};">
-                    <div style="font-weight: 600; margin-bottom: 3px; font-size: 1rem;">{emoji} {team['name']}</div>
-                    <div style="opacity: 0.9; margin-bottom: 5px; font-size: 0.9rem;">{record} ({win_pct}){magic_text}</div>
-                    <div style="background: rgba(77, 150, 255, 0.15); color: {status_color}; padding: 3px 6px; border-radius: 4px; display: inline-block; font-size: 0.75rem; font-weight: bold;">
-                        {status}
-                    </div>
-                </div>
-            """
-        
-        division_html += "</div></div>"
-        
-        # Render the HTML
-        st.html(division_html)
-
-# Racing Visualization (Priority 2)
-
-# Team "Cars" on Racing Tracks (Lanes)
-
-# Circles with team Abbreviation Example: SD
-# Division each have 5 lane race each with a finish line at the end 0 (clinch division)
-# Car position = Distance from division clinch (which is already calculated above and stored in database)
-# Different car colors for different statuses (division leader, wild card, bubble, eliminated)
-# "E" for eliminated teams instead of broken cars
-
-
-
-
+            with data_col:
+                # Build HTML for team data only - single line format to match lane height exactly
+                data_html = '<div style="display: flex; flex-direction: column; gap: 8px;">'
+                
+                for rank in sorted(teams_in_div.keys()):
+                    team_info = teams_in_div[rank]
+                    team = team_info['team']
+                    standings = team_info['standings']
+                    
+                    record = f"{team_info['wins']}-{team_info['losses']}"
+                    games_back = team_info['standings']['gb'] if team_info['standings']['gb'] != '-' else "LEAD"
+                    win_pct = f"{team_info['wins']/(team_info['wins'] + team_info['losses']):.3f}"
+                    
+                    # Magic number logic - only show if not clinched and is division leader
+                    magic_number = team.get('magic_number_win_division', None)
+                    has_clinched = magic_number is not None and magic_number <= 0
+                    magic_text = ""
+                    if not has_clinched and magic_number is not None and int(standings['div_rank']) == 1:
+                        magic_text = f" • Magic #: {magic_number}"
+                    
+                    # Status text and color
+                    if has_clinched and int(standings['div_rank']) == 1:
+                        status = "CLINCHED DIVISION"
+                        status_color = "#4caf50"
+                        emoji = "🏆"
+                    elif int(standings['div_rank']) == 1:
+                        status = "LEADING"
+                        status_color = "#ffd93d"
+                        emoji = "🥇"
+                    elif standings.get('wc_rank', 99) != '-' and int(standings.get('wc_rank', 99)) <= 3:
+                        status = f"PLAYOFFS • {games_back} GB"
+                        status_color = "#4d96ff"
+                        emoji = "🎯"
+                    elif team_info['standings'].get('elim_num') == 'E':
+                        status = "ELIMINATED"
+                        status_color = "#666"
+                        emoji = "❌"
+                    else:
+                        status = f"CHASING • {games_back} GB"
+                        status_color = "#9e9e9e"
+                        emoji = "⚔️"
+                    
+                    # Single line format matching lane height exactly (50px)
+                    data_html += f"""
+                        <div style="height: 50px; display: flex; align-items: center; text-align: left; padding: 0 12px; background: rgba(0,0,0,0.2); border-radius: 8px; border-left: 3px solid {status_color};">
+                            <div style="font-size: 0.85rem; line-height: 1.2;">
+                                <div style="font-weight: 600; color: white;">{emoji} {team['name']}</div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">{record} ({win_pct}){magic_text} • <span style="color: {status_color};">{status}</span></div>
+                            </div>
+                        </div>
+                    """
+                
+                data_html += "</div>"
+                st.html(data_html)
 
 
 # Try all the api calls if those dont work then pull data from database (Priority 3)
