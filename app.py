@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from supabase import create_client
 import statsapi
 import streamlit as st
+import time
 
 load_dotenv()  # This one line loads your .env file
 
@@ -64,6 +65,9 @@ print(standings_lookup[115])
 
 print(standings_lookup[146])
 
+all_team_data = []
+
+start_time = time.time()
 
 # Loops through all teams and stores team data in database table 
 for team in mlb_teams:
@@ -96,19 +100,23 @@ for team in mlb_teams:
         'league_rank': standings['league_rank']
     }
 
-    try:
-        response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
-        
-        # Testing before putting to database table
-        # print(team['id'])
-        # print(team['name'])
-        # print(team['abbreviation'])
-        # print (team['division']['name'])
-        # print (team['league']['name'])
+    all_team_data.append(team_data)
 
-        # print(f"Inserted/Updated: {team['name']}")
-    except:
-        print(f"Could not update {team['name']}")
+
+# Single batch insert after the loop
+try:
+    response = supabase.table('teams').upsert(all_team_data, on_conflict='team_id').execute()
+    end_time = time.time()
+    print(f"Successfully updated {len(all_team_data)} teams in {end_time - start_time:.3f} seconds")
+except Exception as e:
+    print(f"Could not update teams: {e}")
+    # Fallback to individual inserts if batch fails
+    for team_data in all_team_data:
+        try:
+            response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
+            print(f"Inserted/Updated: {team_data['team_name']}")
+        except Exception as individual_error:
+            print(f"Could not update {team_data['team_name']}: {individual_error}")
 
 
 # print(national_league_teams)
@@ -423,11 +431,13 @@ add_elimination_status(national_league_teams)
 add_elimination_status(american_league_teams)
 
 
+all_remaining_database_update_data = []
 
 def update_database_with_magic_numbers_and_elimination():
+    start_time = time.time()
     # Update all teams with magic numbers and elimination status
     all_teams = national_league_teams + american_league_teams
-    
+
     for team in all_teams:
         standings = standings_lookup.get(team['id'])
         
@@ -447,13 +457,23 @@ def update_database_with_magic_numbers_and_elimination():
             'eliminated_from_division': eliminated_from_division,
             'eliminated_from_wildcard': eliminated_from_wildcard
         }
-        
-        try:
-            response = supabase.table('teams').upsert(update_data, on_conflict='team_id').execute()
-            print(f"Updated {team['name']}: Div MN={magic_number_division}, Div Elim={eliminated_from_division}, WC Elim={eliminated_from_wildcard}, Distance={distance_from_clinch}")
-        except Exception as e:
-            print(f"Error updating {team['name']}: {e}")
 
+        all_remaining_database_update_data.append(update_data)
+        
+    try:
+        response = supabase.table('teams').upsert(all_remaining_database_update_data, on_conflict='team_id').execute()
+        end_time = time.time()
+        print(f"Successfully updated {len(all_remaining_database_update_data)} teams in {end_time - start_time:.3f} seconds")
+    except Exception as e:
+        print(f"Could not update teams: {e}") 
+
+        # Fallback to individual inserts if batch fails
+        for update_data  in all_remaining_database_update_data:
+            try:
+                response = supabase.table('teams').upsert(update_data , on_conflict='team_id').execute()
+                print(f"Updated team {update_data['team_id']}")
+            except Exception as e:
+                print(f"Error updating team {update_data['team_id']}: {e}")
 
 # Updates magic_numbers_and_elimination in database
 update_database_with_magic_numbers_and_elimination()
@@ -521,7 +541,7 @@ with col1:
                         text_color = "#333"
                     
                     # Use abbreviation unless eliminated
-                    team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
+                    team_display = team['abbreviation']
                     
                     lanes_html += f"""
                         <!-- Lane for {team['abbreviation']} -->
@@ -660,7 +680,7 @@ with col2:
                         text_color = "#333"
                     
                     # Use abbreviation unless eliminated
-                    team_display = team['abbreviation'] if team_info['standings'].get('elim_num') != 'E' else "E"
+                    team_display = team['abbreviation']
                     
                     lanes_html += f"""
                         <!-- Lane for {team['abbreviation']} -->
