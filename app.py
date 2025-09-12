@@ -4,6 +4,7 @@ from supabase import create_client
 import statsapi
 import streamlit as st
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()  # This one line loads your .env file
 
@@ -11,26 +12,41 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(url, key)
 
+st.set_page_config("MLB Playoff Race Tracker", layout='wide')
+
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
 
-st.set_page_config("MLB Playoff Race Tracker", layout='wide')
+
+totaltime = time.time()
+
+def fetch_teams_data():
+    return statsapi.get('teams', {'sportId': 1})
+    # print(data)
 
 
-data = statsapi.get('teams', {'sportId': 1})
+def fetch_standing_data():
+    return statsapi.standings_data(season='2025')
 
-# print(data)
+# Multithreading for API calls
+with ThreadPoolExecutor(max_workers=2) as executor:
+    # Submit requests (both start immediately) 
+    teams_data_request = executor.submit(fetch_teams_data)
+    standings_data_request = executor.submit(fetch_standing_data)
 
+    # Pull responses once there ready
+    data = teams_data_request.result()
+    standings_data = standings_data_request.result()
+
+time_api_end = time.time()
+
+print(f"APIs take {time_api_end - totaltime:.3f} seconds")
 mlb_teams = data['teams']
 
 # print((mlb_teams[1]))
 
 # test_team_id = statsapi.team_leaders(teamId='112', leaderCategories='hits')
 # print(test_team_id)
-
-
-standings_data = statsapi.standings_data(season='2025')
-
 
 # Strips the outside dictionary layer and only keeps the values in a list
 standings_data_divisions = list(standings_data.values())
@@ -61,9 +77,9 @@ for division in standings_data_divisions:
     for team in division['teams']:
         standings_lookup[team['team_id']] = team
 
-print(standings_lookup[115])
+# print(standings_lookup[115])
 
-print(standings_lookup[146])
+# print(standings_lookup[146])
 
 all_team_data = []
 
@@ -101,7 +117,6 @@ for team in mlb_teams:
     }
 
     all_team_data.append(team_data)
-
 
 # Single batch insert after the loop
 try:
@@ -211,17 +226,23 @@ for team in wildcard_teams_NL:
 # print("NL Playoff Rankings:")
 # print(playoff_rank_NL)
 
+playoff_nl_time = time.time()
+playoff_rank_NL_data = []
+
 for team_id in playoff_rank_NL:
     playoff_position_data = {
         'team_id': team_id,                           # Use the key (team_id)
         'playoff_position': playoff_rank_NL[team_id]  # Use the value (playoff_position)
     }
     # print(playoff_position_data)
-    
-    response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
-    # print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
+    playoff_rank_NL_data.append(playoff_position_data)
 
+response = supabase.table('teams').upsert(playoff_rank_NL_data, on_conflict='team_id').execute()
+# print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
 
+playoff_nl_time_end = time.time()
+
+print(f"playoff_rank_NL has taken {playoff_nl_time_end - playoff_nl_time:.3f} seconds")
 
 playoff_rank_AL = {}
 division_winners_AL = []
@@ -281,16 +302,24 @@ for team in wildcard_teams_AL:
 # print("AL Playoff Rankings:")
 # print(playoff_rank_AL)
 
+
+playoff_al_time = time.time()
+playoff_rank_AL_data = []
+
 for team_id in playoff_rank_AL:
     playoff_position_data = {
         'team_id': team_id,                           # Use the key (team_id)
         'playoff_position': playoff_rank_AL[team_id]  # Use the value (playoff_position)
     }
     # print(playoff_position_data)
-    
-    response = supabase.table('teams').upsert(playoff_position_data, on_conflict='team_id').execute()
-    # print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
+    playoff_rank_AL_data.append(playoff_position_data)
 
+response = supabase.table('teams').upsert(playoff_rank_AL_data, on_conflict='team_id').execute()
+# print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
+
+playoff_al_time_end = time.time()
+
+print(f"Playoff_rank_AL has taken {playoff_al_time_end - playoff_al_time:.3f} seconds")
 
 def division_NL_sort_key(national_league_teams):
     return (national_league_teams['division']['name'])
@@ -757,5 +786,8 @@ with col2:
                 data_html += "</div>"
                 st.html(data_html)
 
+endtime = time.time() - totaltime
+
+print(f"Total time to run the whole program {endtime:.3f} seconds")
 
 # Try all the api calls if those dont work then pull data from database (Priority 3)
