@@ -785,8 +785,41 @@ with col2:
                 data_html += "</div>"
                 st.html(data_html)
 
-endtime = time.time() - totaltime
+footer_html = """
+<div style="position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(30,30,40,0.95); padding: 10px; z-index: 999; border-top: 1px solid rgba(255,217,61,0.3); backdrop-filter: blur(5px);">
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; align-items: center;">
+        <span style="color: #ffd93d; font-size: 0.85rem; font-weight: bold;">Legend:</span>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(66,66,66,0.8), rgba(97,97,97,0.8)); border: 2px solid #666;"></div>
+            <span style="color: white; font-size: 0.8rem;">Eliminated</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(158,158,158,0.8), rgba(189,189,189,0.8)); border: 2px solid #9e9e9e;"></div>
+            <span style="color: white; font-size: 0.8rem;">Chasing</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(77,150,255,0.9), rgba(103,181,255,0.9)); border: 2px solid #4d96ff;"></div>
+            <span style="color: white; font-size: 0.8rem;">Wild Card</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,217,61,0.9), rgba(255,237,78,0.9)); border: 2px solid #ffd93d;"></div>
+            <span style="color: white; font-size: 0.8rem;">Division Leader</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(76,175,80,0.9), rgba(102,187,106,0.9)); border: 2px solid #4caf50;"></div>
+            <span style="color: white; font-size: 0.8rem;">Clinched</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 3px; height: 16px; background: linear-gradient(180deg, #28a745, #40e95e); border-radius: 1px;"></div>
+            <span style="color: white; font-size: 0.8rem;">Clinch Line</span>
+        </div>
+    </div>
+</div>
+"""
 
+st.html(footer_html)
+
+endtime = time.time() - totaltime
 print(f"Total time to run the whole program {endtime:.3f} seconds")
 
 # Try all the api calls if those dont work then pull data from database (Priority 3)
