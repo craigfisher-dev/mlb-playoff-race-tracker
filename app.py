@@ -17,6 +17,8 @@ st.set_page_config("MLB Playoff Race Tracker", layout='wide')
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
 
+status_placeholder = st.empty()
+status_placeholder.info("Loading latest MLB data...")
 
 totaltime = time.time()
 
@@ -27,6 +29,7 @@ def fetch_teams_data():
 
 def fetch_standing_data():
     return statsapi.standings_data(season='2025')
+
 
 # Multithreading for API calls
 with ThreadPoolExecutor(max_workers=2) as executor:
@@ -166,6 +169,7 @@ except Exception as e:
 # Result: playoff_position column will show current playoff seeding
 
 
+playoff_time_start = time.time()
 
 playoff_rank_NL = {}
 division_winners_NL = []
@@ -226,7 +230,6 @@ for team in wildcard_teams_NL:
 # print("NL Playoff Rankings:")
 # print(playoff_rank_NL)
 
-playoff_nl_time = time.time()
 playoff_rank_NL_data = []
 
 for team_id in playoff_rank_NL:
@@ -236,13 +239,6 @@ for team_id in playoff_rank_NL:
     }
     # print(playoff_position_data)
     playoff_rank_NL_data.append(playoff_position_data)
-
-response = supabase.table('teams').upsert(playoff_rank_NL_data, on_conflict='team_id').execute()
-# print(f"Updated team {team_id} with playoff position {playoff_rank_NL[team_id]}")
-
-playoff_nl_time_end = time.time()
-
-print(f"playoff_rank_NL has taken {playoff_nl_time_end - playoff_nl_time:.3f} seconds")
 
 playoff_rank_AL = {}
 division_winners_AL = []
@@ -303,7 +299,6 @@ for team in wildcard_teams_AL:
 # print(playoff_rank_AL)
 
 
-playoff_al_time = time.time()
 playoff_rank_AL_data = []
 
 for team_id in playoff_rank_AL:
@@ -314,12 +309,13 @@ for team_id in playoff_rank_AL:
     # print(playoff_position_data)
     playoff_rank_AL_data.append(playoff_position_data)
 
-response = supabase.table('teams').upsert(playoff_rank_AL_data, on_conflict='team_id').execute()
-# print(f"Updated team {team_id} with playoff position {playoff_rank_AL[team_id]}")
+all_playoff_data = playoff_rank_NL_data + playoff_rank_AL_data
 
-playoff_al_time_end = time.time()
+response = supabase.table('teams').upsert(all_playoff_data, on_conflict='team_id').execute()
 
-print(f"Playoff_rank_AL has taken {playoff_al_time_end - playoff_al_time:.3f} seconds")
+playoff_time_end = time.time()
+
+print(f"Playoff_rank has taken {playoff_time_end - playoff_time_start:.3f} seconds")
 
 def division_NL_sort_key(national_league_teams):
     return (national_league_teams['division']['name'])
@@ -506,6 +502,9 @@ def update_database_with_magic_numbers_and_elimination():
 
 # Updates magic_numbers_and_elimination in database
 update_database_with_magic_numbers_and_elimination()
+
+status_placeholder.empty()
+
 col1, col2 = st.columns(2)
 
 # American League (Left Side)
