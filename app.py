@@ -14,6 +14,41 @@ supabase = create_client(url, key)
 
 st.set_page_config("MLB Playoff Race Tracker", layout='wide')
 
+st.markdown("""
+<style>
+    /* Force dark theme */
+    .stApp {
+        background-color: #0e1117;
+        color: #fafafa;
+    }
+    
+    /* Ensure all text elements are light */
+    .stMarkdown, .stText, p, span, div {
+        color: #fafafa !important;
+    }
+    
+    /* Style headers */
+    h1, h2, h3, h4, h5, h6 {
+        color: #fafafa !important;
+    }
+    
+    /* Style the loading message */
+    .stAlert > div {
+        background-color: #1f2937 !important;
+        color: #fafafa !important;
+    }
+    
+    /* Hide Streamlit branding and menu */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Optional: Hide the deploy button */
+    .stDeployButton {display: none;}
+</style>
+""", unsafe_allow_html=True)
+
+
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
 
