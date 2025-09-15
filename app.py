@@ -6,7 +6,7 @@ import streamlit as st
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-load_dotenv()  # This one line loads your .env file
+load_dotenv()  # Loads .env file
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -385,13 +385,6 @@ divisions_AL = create_divisions_dict(american_league_teams)
 # RG = Remaining games for the first place team
 # Second/first place teams are within the same division
 
-
-# Division Magic Number Formula (Trailling teams 2-5):
-# RG + 1 - (Losses by first place team - losses by (current place team))
-# Where:
-
-# RG = Remaining games for the CURRENT PLACE team
-# Current/first place teams are within the same division
 
 
 def calculate_division_magic_numbers(teams, divisions_dict):
