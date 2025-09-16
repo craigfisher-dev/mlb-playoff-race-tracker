@@ -1,6 +1,8 @@
 import streamlit as st
 import time
 import os
+import logging
+import warnings
 
 totaltime = time.time()
 
@@ -11,6 +13,10 @@ st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", uns
 
 status_placeholder = st.empty()
 status_placeholder.info("Loading latest MLB data...")
+
+# Suppress Streamlit threading warnings
+logging.getLogger('streamlit.runtime.scriptrunner.script_runner').setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", message="missing ScriptRunContext")
 
 from dotenv import load_dotenv
 
@@ -26,12 +32,12 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase = create_client(url, key)
 
-@st.cache_data(ttl=1800)
+@st.cache_data(ttl=1800, show_spinner=False)
 def fetch_teams_data():
     return statsapi.get('teams', {'sportId': 1})
     # print(data)
 
-@st.cache_data(ttl=1800)
+@st.cache_data(ttl=1800, show_spinner=False)
 def fetch_standing_data():
     return statsapi.standings_data(season='2025')
 
