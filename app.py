@@ -1,19 +1,7 @@
-import os
-from dotenv import load_dotenv
-from supabase import create_client
-import statsapi
 import streamlit as st
 import time
-from concurrent.futures import ThreadPoolExecutor
-
-load_dotenv()  # Loads .env file
-
-url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase = create_client(url, key)
 
 st.set_page_config("MLB Playoff Race Tracker", layout='wide')
-
 
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
@@ -23,11 +11,24 @@ status_placeholder.info("Loading latest MLB data...")
 
 totaltime = time.time()
 
+import os
+from dotenv import load_dotenv
+from supabase import create_client
+import statsapi
+from concurrent.futures import ThreadPoolExecutor
+
+load_dotenv()  # Loads .env file
+
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+supabase = create_client(url, key)
+
+@st.cache_data(ttl=1800)
 def fetch_teams_data():
     return statsapi.get('teams', {'sportId': 1})
     # print(data)
 
-
+@st.cache_data(ttl=1800)
 def fetch_standing_data():
     return statsapi.standings_data(season='2025')
 
