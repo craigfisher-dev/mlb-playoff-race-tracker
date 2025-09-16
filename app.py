@@ -49,7 +49,7 @@ with ThreadPoolExecutor(max_workers=2) as executor:
 
 time_api_end = time.time()
 
-st.write(f"APIs take {time_api_end - start_time:.3f} seconds")
+print(f"APIs take {time_api_end - start_time:.3f} seconds")
 mlb_teams = data['teams']
 
 # print((mlb_teams[1]))
