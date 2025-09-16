@@ -51,6 +51,7 @@ def fetch_teams_data():
 def fetch_standing_data():
     return statsapi.standings_data(season='2025')
 
+start_time = time.time()
 
 # Multithreading for API calls
 with ThreadPoolExecutor(max_workers=2) as executor:
@@ -64,7 +65,7 @@ with ThreadPoolExecutor(max_workers=2) as executor:
 
 time_api_end = time.time()
 
-st.write(f"APIs take {time_api_end - totaltime:.3f} seconds")
+st.write(f"APIs take {time_api_end - start_time:.3f} seconds")
 mlb_teams = data['teams']
 
 # print((mlb_teams[1]))
