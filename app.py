@@ -1,42 +1,26 @@
 import streamlit as st
 import time
+import os
 
 totaltime = time.time()
-st.write(f"Script started: {time.time() - totaltime:.3f}")
 
 st.set_page_config("MLB Playoff Race Tracker", layout='wide')
-st.write(f"Page config: {time.time() - totaltime:.3f}")
 
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
-st.write(f"Title rendered: {time.time() - totaltime:.3f}")
 
 status_placeholder = st.empty()
 status_placeholder.info("Loading latest MLB data...")
-st.write(f"Loading message shown: {time.time() - totaltime:.3f}")
 
-import os
 from dotenv import load_dotenv
-st.write(f"Dotenv imported: {time.time() - totaltime:.3f}")
 
 from supabase import create_client
-st.write(f"Supabase imported: {time.time() - totaltime:.3f}")
 
 import statsapi
-st.write(f"StatsAPI imported: {time.time() - totaltime:.3f}")
 
 from concurrent.futures import ThreadPoolExecutor
-st.write(f"ThreadPoolExecutor imported: {time.time() - totaltime:.3f}")
 
-load_dotenv()
-st.write(f"Env loaded: {time.time() - totaltime:.3f}")
-
-url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase = create_client(url, key)
-st.write(f"Supabase client created: {time.time() - totaltime:.3f}")
-
-load_dotenv()  # Loads .env file
+load_dotenv() # Loads .env file
 
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -147,7 +131,7 @@ for team in mlb_teams:
 try:
     response = supabase.table('teams').upsert(all_team_data, on_conflict='team_id').execute()
     end_time = time.time()
-    st.write(f"Successfully updated {len(all_team_data)} teams in {end_time - start_time:.3f} seconds")
+    print(f"Successfully updated {len(all_team_data)} teams in {end_time - start_time:.3f} seconds")
 except Exception as e:
     print(f"Could not update teams: {e}")
     # Fallback to individual inserts if batch fails
@@ -337,7 +321,7 @@ response = supabase.table('teams').upsert(all_playoff_data, on_conflict='team_id
 
 playoff_time_end = time.time()
 
-st.write(f"Playoff_rank has taken {playoff_time_end - playoff_time_start:.3f} seconds")
+print(f"Playoff_rank has taken {playoff_time_end - playoff_time_start:.3f} seconds")
 
 def division_NL_sort_key(national_league_teams):
     return (national_league_teams['division']['name'])
@@ -503,7 +487,7 @@ def update_database_with_magic_numbers_and_elimination():
     try:
         response = supabase.table('teams').upsert(all_remaining_database_update_data, on_conflict='team_id').execute()
         end_time = time.time()
-        st.write(f"Successfully updated {len(all_remaining_database_update_data)} teams in {end_time - start_time:.3f} seconds")
+        print(f"Successfully updated {len(all_remaining_database_update_data)} teams in {end_time - start_time:.3f} seconds")
     except Exception as e:
         print(f"Could not update teams: {e}") 
 
@@ -835,6 +819,6 @@ footer_html = """
 st.html(footer_html)
 
 endtime = time.time() - totaltime
-st.write(f"Total time to run the whole program {endtime:.3f} seconds")
+print(f"Total time to run the whole program {endtime:.3f} seconds")
 
 # Try all the api calls if those dont work then pull data from database (Priority 3)
