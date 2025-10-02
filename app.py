@@ -406,9 +406,23 @@ def calculate_division_magic_numbers(teams, divisions_dict):
         if int(standings['div_rank']) == 1:
             # Only calculate for first place teams
             remaining_games = 162 - (standings['w'] + standings['l'])
-            second_place_losses = divisions_dict[division][2]['losses']
-            team['magic_number_win_division'] = remaining_games + 1 - (second_place_losses - standings['l'])
-            # print(f"{team['name']}: Division Magic Number = {team['magic_number_win_division']}")
+            
+            # Check if ALL teams in the division have finished their season (played 162 games)
+            # This handles the edge case where two teams end with identical records:
+            # the team ranked #1 by tiebreaker rules will have their magic number set to 0
+            
+            all_teams_finished = all(
+                (divisions_dict[division][rank]['wins'] + divisions_dict[division][rank]['losses']) == 162
+                for rank in divisions_dict[division].keys()
+            )
+            
+            # If season is over and team is ranked #1, they've won the division
+            if all_teams_finished and remaining_games == 0:
+                team['magic_number_win_division'] = 0
+            else:
+                second_place_losses = divisions_dict[division][2]['losses']
+                team['magic_number_win_division'] = remaining_games + 1 - (second_place_losses - standings['l'])
+                # print(f"{team['name']}: Division Magic Number = {team['magic_number_win_division']}")
         else:
             # Set to NULL for non-first place teams
             team['magic_number_win_division'] = None
