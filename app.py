@@ -28,9 +28,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv() # Loads .env file
 
-url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase = create_client(url, key)
+@st.cache_resource
+def get_supabase_client():
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    supabase = create_client(url, key)
+    return supabase
+
+supabase = get_supabase_client()
 
 @st.cache_data(ttl=1800, show_spinner=False)
 def fetch_teams_data():
