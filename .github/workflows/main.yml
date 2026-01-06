@@ -1,0 +1,29 @@
+# .github/workflows/keep-supabase-active.yml
+name: Keep Supabase Active
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET \
+            "$SUPABASE_URL/rest/v1/teams?select=team_id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          
+          http_code=$(echo "$response" | tail -n1)
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "Failed to ping Supabase! HTTP $http_code"
+            exit 1
+          fi
+          echo "Successfully pinged Supabase"
