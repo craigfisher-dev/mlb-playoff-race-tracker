@@ -13,22 +13,55 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Pinging $SUPABASE_URL..."
-          
+          echo "================================"
+          echo "Starting Supabase keep-alive ping"
+          echo "================================"
+
+          # READ
+          echo ""
+          echo "Step 1: Reading from teams table..."
           response=$(curl -s -w "\n%{http_code}" -X GET \
             "$SUPABASE_URL/rest/v1/teams?select=team_id&limit=1" \
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY")
-          
           body=$(echo "$response" | head -n1)
           http_code=$(echo "$response" | tail -n1)
-          
-          echo "HTTP Status: $http_code"
-          echo "Response: $body"
-          
-          if [ "$http_code" -ne 200 ]; then
-            echo "Failed to ping Supabase! HTTP $http_code"
+          echo "Read Status: $http_code"
+          echo "Read Response: $body"
+
+          # WRITE
+          echo ""
+          echo "Step 2: Writing to keep_alive table..."
+          write_response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$SUPABASE_URL/rest/v1/keep_alive" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates" \
+            -d "{\"id\": 1, \"pinged_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+          write_body=$(echo "$write_response" | head -n1)
+          write_code=$(echo "$write_response" | tail -n1)
+          echo "Write Status: $write_code"
+          echo "Write Response: $write_body"
+
+          # DELETE
+          echo ""
+          echo "Step 3: Cleaning up keep_alive table..."
+          delete_response=$(curl -s -w "\n%{http_code}" -X DELETE \
+            "$SUPABASE_URL/rest/v1/keep_alive?id=eq.1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          delete_body=$(echo "$delete_response" | head -n1)
+          delete_code=$(echo "$delete_response" | tail -n1)
+          echo "Delete Status: $delete_code"
+          echo "Delete Response: $delete_body"
+
+          # RESULT
+          echo ""
+          echo "================================"
+          if [ "$http_code" -ne 200 ] || [ "$write_code" -ne 200 ] || [ "$delete_code" -ne 200 ]; then
+            echo "FAILED - Read: $http_code | Write: $write_code | Delete: $delete_code"
             exit 1
           fi
-          
-          echo "Successfully pinged Supabase"
+          echo "SUCCESS - Read: $http_code | Write: $write_code | Delete: $delete_code"
+          echo "================================"
