@@ -16,9 +16,9 @@ Real-time standings visualization that displays the MLB playoff race as racing l
 
 Teams appear as circles in racing lanes. Position on the track shows how close they are to clinching their division. The green line on the right represents the division clinch line - teams that reach it have clinched their division. Eliminated teams (marked with X) are mathematically eliminated from winning their division, but may still qualify for playoffs as wild cards.
 
-<img width="6271" height="2636" alt="_C__Users_craig_Downloads_mlb-playoff-race-tracker onrender com_(High20Res) png(High Res) (2)" src="https://github.com/user-attachments/assets/dba2fc2e-fad2-4cb9-8b63-77db8597429b" />
+<img alt="_C__Users_craig_Downloads_mlb-playoff-race-tracker onrender com_(High20Res) png(High Res) (2)" src="https://github.com/user-attachments/assets/dba2fc2e-fad2-4cb9-8b63-77db8597429b" />
 
-<img width="3078" height="178" alt="image" src="https://github.com/user-attachments/assets/949218c7-f280-424d-93e9-060ab1fc9a0e" />
+<img alt="image" src="https://github.com/user-attachments/assets/949218c7-f280-424d-93e9-060ab1fc9a0e" />
 
 ## Tech Stack
 
