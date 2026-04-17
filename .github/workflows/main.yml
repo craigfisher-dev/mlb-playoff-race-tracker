@@ -59,7 +59,7 @@ jobs:
           # RESULT
           echo ""
           echo "================================"
-          if [ "$http_code" -ne 200 ] || [ "$write_code" -ne 200 ] || [ "$delete_code" -ne 200 ]; then
+          if [ "$http_code" -ne 200 ] || [ "$write_code" -ne 200 ] || [ "$delete_code" -ne 204 ]; then
             echo "FAILED - Read: $http_code | Write: $write_code | Delete: $delete_code"
             exit 1
           fi
