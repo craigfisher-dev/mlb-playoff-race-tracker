@@ -8,6 +8,12 @@ totaltime = time.time()
 
 st.set_page_config("MLB Playoff Race Tracker", layout='wide')
 
+# Season configuration
+# Bump SEASON each year and create the matching table in Supabase:
+#   create table teams_2027 (like teams_2026 including all);
+SEASON = 2026
+TEAMS_TABLE = f"teams_{SEASON}"
+
 # Title
 st.markdown("<h1 style='text-align: center;'>MLB Playoff Race Tracker</h1>", unsafe_allow_html=True)
 
@@ -44,7 +50,7 @@ def fetch_teams_data():
 
 @st.cache_data(ttl=1800, show_spinner=False)
 def fetch_standing_data():
-    return statsapi.standings_data(season='2025')
+    return statsapi.standings_data(season=str(SEASON))
 
 start_time = time.time()
 
@@ -140,7 +146,7 @@ for team in mlb_teams:
 
 # Single batch insert after the loop
 try:
-    response = supabase.table('teams').upsert(all_team_data, on_conflict='team_id').execute()
+    response = supabase.table(TEAMS_TABLE).upsert(all_team_data, on_conflict='team_id').execute()
     end_time = time.time()
     print(f"Successfully updated {len(all_team_data)} teams in {end_time - start_time:.3f} seconds")
 except Exception as e:
@@ -148,7 +154,7 @@ except Exception as e:
     # Fallback to individual inserts if batch fails
     for team_data in all_team_data:
         try:
-            response = supabase.table('teams').upsert(team_data, on_conflict='team_id').execute()
+            response = supabase.table(TEAMS_TABLE).upsert(team_data, on_conflict='team_id').execute()
             print(f"Inserted/Updated: {team_data['team_name']}")
         except Exception as individual_error:
             print(f"Could not update {team_data['team_name']}: {individual_error}")
@@ -328,7 +334,7 @@ for team_id in playoff_rank_AL:
 
 all_playoff_data = playoff_rank_NL_data + playoff_rank_AL_data
 
-response = supabase.table('teams').upsert(all_playoff_data, on_conflict='team_id').execute()
+response = supabase.table(TEAMS_TABLE).upsert(all_playoff_data, on_conflict='team_id').execute()
 
 playoff_time_end = time.time()
 
@@ -510,7 +516,7 @@ def update_database_with_magic_numbers_and_elimination():
         all_remaining_database_update_data.append(update_data)
         
     try:
-        response = supabase.table('teams').upsert(all_remaining_database_update_data, on_conflict='team_id').execute()
+        response = supabase.table(TEAMS_TABLE).upsert(all_remaining_database_update_data, on_conflict='team_id').execute()
         end_time = time.time()
         print(f"Successfully updated {len(all_remaining_database_update_data)} teams in {end_time - start_time:.3f} seconds")
     except Exception as e:
@@ -519,7 +525,7 @@ def update_database_with_magic_numbers_and_elimination():
         # Fallback to individual inserts if batch fails
         for update_data  in all_remaining_database_update_data:
             try:
-                response = supabase.table('teams').upsert(update_data , on_conflict='team_id').execute()
+                response = supabase.table(TEAMS_TABLE).upsert(update_data , on_conflict='team_id').execute()
                 print(f"Updated team {update_data['team_id']}")
             except Exception as e:
                 print(f"Error updating team {update_data['team_id']}: {e}")
