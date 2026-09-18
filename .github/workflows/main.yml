@@ -17,21 +17,9 @@ jobs:
           echo "Starting Supabase keep-alive ping"
           echo "================================"
 
-          # READ
-          echo ""
-          echo "Step 1: Reading from teams table..."
-          response=$(curl -s -w "\n%{http_code}" -X GET \
-            "$SUPABASE_URL/rest/v1/teams_2026?select=team_id&limit=1" \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY")
-          body=$(echo "$response" | head -n1)
-          http_code=$(echo "$response" | tail -n1)
-          echo "Read Status: $http_code"
-          echo "Read Response: $body"
-
           # WRITE
           echo ""
-          echo "Step 2: Writing to keep_alive table..."
+          echo "Step 1: Writing to keep_alive table..."
           write_response=$(curl -s -w "\n%{http_code}" -X POST \
             "$SUPABASE_URL/rest/v1/keep_alive" \
             -H "apikey: $SUPABASE_KEY" \
@@ -43,6 +31,18 @@ jobs:
           write_code=$(echo "$write_response" | tail -n1)
           echo "Write Status: $write_code"
           echo "Write Response: $write_body"
+
+          # READ
+          echo ""
+          echo "Step 2: Reading from keep_alive table..."
+          response=$(curl -s -w "\n%{http_code}" -X GET \
+            "$SUPABASE_URL/rest/v1/keep_alive?select=*&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          body=$(echo "$response" | head -n1)
+          http_code=$(echo "$response" | tail -n1)
+          echo "Read Status: $http_code"
+          echo "Read Response: $body"
 
           # DELETE
           echo ""
@@ -60,8 +60,8 @@ jobs:
           echo ""
           echo "================================"
           if [ "$http_code" -ne 200 ] || [ "$write_code" -ne 201 ] || [ "$delete_code" -ne 204 ]; then
-            echo "FAILED - Read: $http_code | Write: $write_code | Delete: $delete_code"
+            echo "FAILED - Write: $write_code | Read: $http_code | Delete: $delete_code"
             exit 1
           fi
-          echo "SUCCESS - Read: $http_code | Write: $write_code | Delete: $delete_code"
+          echo "SUCCESS - Write: $write_code | Read: $http_code | Delete: $delete_code"
           echo "================================"
