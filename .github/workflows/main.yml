@@ -21,7 +21,7 @@ jobs:
           echo ""
           echo "Step 1: Reading from teams table..."
           response=$(curl -s -w "\n%{http_code}" -X GET \
-            "$SUPABASE_URL/rest/v1/teams?select=team_id&limit=1" \
+            "$SUPABASE_URL/rest/v1/teams_2026?select=team_id&limit=1" \
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY")
           body=$(echo "$response" | head -n1)
